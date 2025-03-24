@@ -51,13 +51,6 @@ public class ScpCommandHandler implements CommandFactory {
         return new ScpCommand(channel, command, executorService, Integer.MAX_VALUE, Integer.MAX_VALUE, fileOpener, transferEventListener);
     }
 
-    /**
-     * Extracts the file path from the SCP command.
-     *
-     * @param command The SCP command string
-     * @param prefix The prefix to be stripped (either "scp -f " or "scp -t ")
-     * @return The file path if valid, null otherwise
-     */
     private String extractFilePath(String command, String prefix) {
         if (command.length() <= prefix.length()) {
             logger.error("Invalid command, no file path provided.");
