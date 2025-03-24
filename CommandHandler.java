@@ -10,7 +10,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.EnumSet;
@@ -29,25 +28,25 @@ public class CommandHandler {
     }
 
     public List<String> listFiles(String directory) throws IOException {
-        logger.info("Attempting to list files in directory: {}", directory);
-        List<String> fileNames = new ArrayList<>();
+        if (!session.isOpen()) {
+            throw new IOException("SFTP session is not open.");
+        }
+
+        logger.debug("Attempting to list files in directory: {}", directory);
 
         try (SftpClient sftp = SftpClientFactory.instance().createSftpClient(session)) {
-            Iterable<SftpClient.DirEntry> entries = sftp.readDir(directory);
-            for (SftpClient.DirEntry entry : entries) {
-                fileNames.add(entry.getFilename());
+            List<String> filenames = new ArrayList<>();
+            Iterable<SftpClient.DirEntry> dirEntries = sftp.readDir(directory);
+            for (SftpClient.DirEntry entry : dirEntries) {
+                filenames.add(entry.getFilename());
+                logger.debug("Found file: {}", entry.getFilename());
             }
+
+            return filenames;
         } catch (SftpException e) {
-            logger.error("SFTP error during directory listing for directory {}: {}", directory, e.getMessage());
-            throw new IOException("Failed to list files in directory: " + directory, e);
+            logger.error("SFTP error while listing files in directory {}: {}", directory, e.getMessage());
+            throw new IOException("Failed to list directory: " + directory, e);
         }
-
-        if (fileNames.isEmpty()) {
-            logger.warn("No files found in directory: {}", directory);
-            throw new IOException("No files found in directory: " + directory);
-        }
-
-        return fileNames;
     }
 
     public void downloadFile(String remoteFilePath, Path localFilePath) throws IOException {
